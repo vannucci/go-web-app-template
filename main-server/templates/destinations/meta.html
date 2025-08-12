@@ -1,0 +1,143 @@
+{{template "layout.html" .}}
+
+{{define "title"}}Meta Destination Configuration{{end}}
+
+{{define "content"}}
+<h1>{{.Title}}</h1>
+
+{{if .Error}}
+<div class="alert error">{{.Error}}</div>
+{{end}}
+
+<form method="POST" 
+      action="/destinations/meta/save"
+      hx-post="/destinations/meta/validate"
+      hx-trigger="change delay:500ms"
+      hx-target="#validation-results">
+    
+    <!-- Basic Configuration -->
+    <div class="form-section">
+        <h3>Basic Configuration</h3>
+        
+        <div class="form-group">
+            <label for="name">Configuration Name *</label>
+            <input type="text" id="name" name="name" required
+                   value="{{.Destination.Name}}"
+                   placeholder="e.g., Q1 2024 US Campaign">
+            <span class="hint">Your internal name for this configuration</span>
+        </div>
+        
+        <div class="form-group">
+            <label for="account_id">Meta Account ID *</label>
+            <input type="text" id="account_id" name="account_id" 
+                   required pattern="^act_[0-9]+$"
+                   value="{{.Destination.AccountID}}"
+                   placeholder="act_123456789">
+            <span class="hint">Must start with 'act_' followed by numbers</span>
+        </div>
+        
+        <div class="form-group">
+            <label for="campaign_name">Campaign Name *</label>
+            <input type="text" id="campaign_name" name="campaign_name" required
+                   value="{{.Destination.CampaignName}}"
+                   placeholder="Spring Sale Retargeting">
+            <span class="hint">Name that will appear in Meta Ads Manager</span>
+        </div>
+    </div>
+    
+    <!-- Budget & Pricing -->
+    <div class="form-section">
+        <h3>Budget & Pricing</h3>
+        
+        <div class="form-group">
+            <label for="cpm_value">CPM Value ($) *</label>
+            <input type="number" id="cpm_value" name="cpm_value" 
+                   required min="0.01" max="1000" step="0.01"
+                   value="{{.Destination.CPMValue}}"
+                   placeholder="15.00">
+            <span class="hint">Cost per thousand impressions in USD</span>
+        </div>
+        
+        <div class="form-group">
+            <label for="budget_daily">Daily Budget ($) *</label>
+            <input type="number" id="budget_daily" name="budget_daily" 
+                   required min="1" step="0.01"
+                   value="{{.Destination.BudgetDaily}}"
+                   placeholder="100.00">
+        </div>
+        
+        <div class="form-group">
+            <label for="budget_total">Total Budget ($) *</label>
+            <input type="number" id="budget_total" name="budget_total" 
+                   required min="1" step="0.01"
+                   value="{{.Destination.BudgetTotal}}"
+                   placeholder="3000.00">
+        </div>
+    </div>
+    
+    <!-- Targeting -->
+    <div class="form-section">
+        <h3>Targeting</h3>
+        
+        <div class="form-group">
+            <label>Regions *</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="regions" value="US"> United States</label>
+                <label><input type="checkbox" name="regions" value="CA"> Canada</label>
+                <label><input type="checkbox" name="regions" value="UK"> United Kingdom</label>
+                <label><input type="checkbox" name="regions" value="FR"> France</label>
+                <label><input type="checkbox" name="regions" value="DE"> Germany</label>
+            </div>
+            <span class="hint">Select all regions where ads will run</span>
+        </div>
+        
+        <div class="form-group">
+            <label for="audience_type">Audience Type *</label>
+            <select id="audience_type" name="audience_type" required>
+                <option value="">Select...</option>
+                <option value="custom">Custom Audience</option>
+                <option value="lookalike">Lookalike Audience</option>
+                <option value="retargeting">Retargeting</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Schedule -->
+    <div class="form-section">
+        <h3>Schedule</h3>
+        
+        <div class="form-group">
+            <label for="start_date">Start Date *</label>
+            <input type="date" id="start_date" name="start_date" required
+                   value="{{.Destination.StartDate}}"
+                   min="{{.MinDate}}">
+        </div>
+        
+        <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date"
+                   value="{{.Destination.EndDate}}">
+            <span class="hint">Leave empty for ongoing campaign</span>
+        </div>
+    </div>
+    
+    <!-- Optimization -->
+    <div class="form-section">
+        <h3>Optimization</h3>
+        
+        <div class="form-group">
+            <label for="optimize_for">Optimize For *</label>
+            <select id="optimize_for" name="optimize_for" required>
+                <option value="clicks">Link Clicks</option>
+                <option value="impressions">Impressions</option>
+                <option value="conversions">Conversions</option>
+                <option value="reach">Reach</option>
+            </select>
+        </div>
+    </div>
+    
+    <div id="validation-results"></div>
+    
+    <button type="submit">Save Destination</button>
+</form>
+{{end}}

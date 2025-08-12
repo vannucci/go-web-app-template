@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # Basic onboarding server
+  onboarding-server:
+    build: 
+      context: ./onboarding-server
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  s3-mock:
+    image: nginx:alpine
+    ports:
+      - "4566:80"
+    volumes:
+      - "./s3-mock-data:/usr/share/nginx/html"
+      - "./s3-mock-nginx.conf:/etc/nginx/nginx.conf:ro"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Main Golang web server (your primary development target)
+  # main-server:
+  #   build: 
+  #     context: ./main-server
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - PORT=8080
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_USER=appuser
+  #     - DB_PASSWORD=apppassword
+  #     - DB_NAME=appdb
+  #     - S3_ENDPOINT=
+  #     - ONBOARDING_SERVICE_URL=http://onboarding-server:8080
+  #     - STATIC_FILES_URL=http://static-server:8080
+  #     - PROMETHEUS_ENABLED=true
+  #   depends_on:
+  #     - postgres
+  #     - onboarding-server
+  #   volumes:
+  #     - "./main-server:/app"  # Mount for live development
+  #   networks:
+  #     - app-network
+  #   # Commented out restart so you can control this service manually
+  #   # restart: unless-stopped
+
+  # Static file server (nginx)
+  static-server:
+    image: nginx:alpine
+    ports:
+      - "8082:80"
+    volumes:
+      - "./static:/usr/share/nginx/html:ro"
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=appdb
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Grafana for visualization and dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - "./grafana/provisioning:/etc/grafana/provisioning"
+      - "./grafana/dashboards:/var/lib/grafana/dashboards"
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  app-network:
+    driver: bridge

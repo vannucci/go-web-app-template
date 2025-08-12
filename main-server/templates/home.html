@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Main Server</title>
+        <link rel="stylesheet" href="http://localhost:8082/styles.css">
+    </head>
+    <body>
+        <h1>Welcome to the Main Server</h1>
+        <p>This is your primary development server.</p>
+        <p>Metrics are being collected for Prometheus/Grafana.</p>
+        <ul>
+            <li><a href="/health">Health Check</a></li>
+            <li><a href="/metrics">Prometheus Metrics</a></li>
+            <li><a href="/audit">Generate Audit Event</a></li>
+        </ul>
+        <script src="http://localhost:8082/app.js"></script>
+    </body>
+</html>

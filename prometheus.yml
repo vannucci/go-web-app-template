@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Main server metrics
+  - job_name: 'main-server'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['main-server:8080']
+    metrics_path: '/metrics'
+
+  # Onboarding server metrics
+  - job_name: 'onboarding-server'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['onboarding-server:8080']
+    metrics_path: '/metrics'
+
+  # PostgreSQL metrics (if you add postgres_exporter later)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
