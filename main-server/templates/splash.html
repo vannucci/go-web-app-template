@@ -1,0 +1,31 @@
+{{define "content"}}
+<div class="splash">
+    <div class="splash-card card">
+        <h1><span class="brand">Throtle</span> Platform</h1>
+        
+        {{if .Error}}
+        <div class="error">{{.Error}}</div>
+        {{end}}
+        
+        <form action="/auth/login" method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="admin@throtle.io" value="{{.Email}}">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Enter your password">
+            </div>
+            
+            <button type="submit" class="btn">Sign In</button>
+        </form>
+        
+        <div style="margin-top: 24px; text-align: center; color: #6b7280; font-size: 14px;">
+            <p>Default login: admin@throtle.io / Password123!</p>
+        </div>
+    </div>
+</div>
+{{end}}

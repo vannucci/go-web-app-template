@@ -1,0 +1,33 @@
+{{define "content"}}
+<div class="container">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h1>Dashboard</h1>
+            <a href="/auth/logout" style="color: #6b7280; text-decoration: none;">Logout</a>
+        </div>
+        
+        <div style="background: #f0f9ff; padding: 16px; border-radius: 6px; margin-bottom: 24px;">
+            <h3 style="color: #0369a1; margin-bottom: 8px;">Welcome, {{.User.Name}}!</h3>
+            <p style="color: #0c4a6e;">Email: {{.User.Email}}</p>
+            <p style="color: #0c4a6e;">User ID: {{.User.ID}}</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4 style="margin-bottom: 8px;">Health Check</h4>
+                <a href="/health" style="color: #3b82f6; text-decoration: none;">View Status</a>
+            </div>
+            
+            <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4 style="margin-bottom: 8px;">Metrics</h4>
+                <a href="/metrics" style="color: #3b82f6; text-decoration: none;">View Metrics</a>
+            </div>
+            
+            <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h4 style="margin-bottom: 8px;">Audit Logs</h4>
+                <a href="/audit" style="color: #3b82f6; text-decoration: none;">View Logs</a>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

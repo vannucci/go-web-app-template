@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"main-server/config"
 	"main-server/handlers"
 	customMiddleware "main-server/middleware"
 	"main-server/services"
@@ -27,7 +28,7 @@ type App struct {
 	db      *sql.DB
 	metrics *Metrics
 	echo    *echo.Echo
-	config  *Config
+	config  *config.Config
 }
 
 type Metrics struct {
@@ -76,7 +77,7 @@ type ServiceConfig struct {
 
 var store *sessions.CookieStore
 
-func Load() (*Config, error) {
+func Load() (*config.Config, error) {
 
 	env := os.Getenv("GO_ENV")
 	if "" == env {
@@ -104,7 +105,7 @@ func Load() (*Config, error) {
 		debug = false
 	}
 
-	return &Config{
+	return &config.Config{
 		Port:        getEnv("PORT", "8080"),
 		Environment: getEnv("ENVIRONMENT", env),
 		Version:     getEnv("VERSION", "1.0.0"),
@@ -271,6 +272,7 @@ func main() {
 		config.AWS.Region,
 		config.AWS.CognitoUserPoolID,
 	)
+	userService := services.NewUserService(db)
 
 	app := &App{
 		db:      db,
@@ -282,26 +284,25 @@ func main() {
 	// Add metrics middleware
 	e.Use(app.metricsMiddleware())
 
-	// Routes
-	e.GET("/", app.homeHandler)
-
-	// Prometheus metrics endpoint (wrap the handler)
-	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
-
 	// In setupRoutes() function
-	authHandler := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(authService, userService)
+	homeHandler := handlers.NewHomeHandler(config, db)
+
+	// Routes
+	e.GET("/", authHandler.ShowSplash)
 
 	// Auth routes
 	auth := e.Group("/auth")
-	auth.GET("/login", authHandler.ShowLogin)
-	auth.POST("/login", authHandler.Login)
-	auth.GET("/callback", authHandler.Callback)
+	auth.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+	auth.GET("/login", authHandler.ShowSplash)
+	auth.POST("/login", authHandler.LoginForm)
+	// auth.GET("/callback", authHandler.Callback)
 	auth.POST("/logout", authHandler.Logout)
 
 	main := auth.Group("/main")
-	main.GET("/health", app.healthHandler)
-	main.GET("/audit", app.auditHandler)
-	main.POST("/audit", app.auditHandler)
+	main.GET("/health", homeHandler.Health)
+	// main.GET("/audit", app.auditHandler)
+	// main.POST("/audit", app.auditHandler)
 	main.GET("/dashboard", authHandler.Dashboard, customMiddleware.RequireAuth())
 
 	// Protected routes
@@ -311,52 +312,4 @@ func main() {
 
 	// Start server
 	e.Logger.Fatal(e.Start(":" + config.Port))
-}
-
-func (app *App) homeHandler(c echo.Context) error {
-	app.LogAudit("page_access", "user123", "/")
-
-	// Data to pass to the template
-	data := map[string]interface{}{
-		"Title":       "Main Server",
-		"Environment": app.config.Environment,
-		"Version":     app.config.Version,
-		"Links": []map[string]string{
-			{"URL": "/health", "Text": "Health Check"},
-			{"URL": "/metrics", "Text": "Prometheus Metrics"},
-			{"URL": "/audit", "Text": "Generate Audit Event"},
-		},
-	}
-
-	return c.Render(http.StatusOK, "home.html", data)
-}
-
-func (app *App) auditHandler(c echo.Context) error {
-	// Example audit events for testing
-	switch c.Request().Method {
-	case "GET":
-		app.LogAudit("audit_page_view", "user123", "/audit")
-		html := `
-			<h1>Audit Event Generated</h1>
-			<p>Check Prometheus metrics at <a href="/metrics">/metrics</a></p>
-			<p>Or send a POST request to generate a different audit event.</p>
-		`
-		return c.HTML(http.StatusOK, html)
-
-	case "POST":
-		app.LogAudit("user_action", "user456", "form_submit")
-		return c.JSON(http.StatusOK, map[string]string{
-			"message": "Audit event logged",
-			"type":    "user_action",
-		})
-	}
-
-	return c.String(http.StatusMethodNotAllowed, "Method not allowed")
-}
-
-func (app *App) healthHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"status":    "healthy",
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
 }
