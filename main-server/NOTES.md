@@ -40,25 +40,25 @@ Users can be of one of four types, Users, Company Admins, Workspace Admins and S
 
 ### Additional Requirements to Consider:
    Authentication & Security:
-      Password policies and reset functionality
-      Multi-factor authentication support
-      Session management and token expiration
-      Account lockout after failed attempts
+      * Password policies and reset functionality
+      * Multi-factor authentication support
+      * Session management and token expiration
+      * Account lockout after failed attempts
 
    Audit & Compliance:
-      Audit logs for all admin actions (especially deletions/disables)
-      User activity tracking at company level (as you mentioned)
-      Data retention policies for deleted entities
+      * Audit logs for all admin actions (especially deletions/disables)
+      * User activity tracking at company level (as you mentioned)
+      * Data retention policies for deleted entities
    
    User Experience:
-      User invitation/onboarding flow
-      Email verification for new accounts
-      Bulk user operations (import/export)
+      * User invitation/onboarding flow
+      * Email verification for new accounts
+      * Bulk user operations (import/export)
 
    Business Logic:
-      Default workspace/company assignment for new users
-      User transfer between companies/workspaces
-      Handling of orphaned users when companies are deleted
+      * Default workspace/company assignment for new users
+      * User transfer between companies/workspaces
+      * Handling of orphaned users when companies are deleted
 
 ### Permission Matrix:
 Action	         Super Admin	   Workspace Admin	   Company Admin	   User
