@@ -62,10 +62,10 @@ Users can be of one of four types, Users, Company Admins, Workspace Admins and S
 
 ### Permission Matrix:
 Action	         Super Admin	   Workspace Admin	   Company Admin	   User
-Manage Workspaces	✅	            ✅ (own)	            ❌	               ❌
-Manage Companies	✅	            ✅ (in workspace)	   ✅ (own)	         ❌
-Manage Users	   ✅	            ✅ (in workspace)	   ✅ (in company)	✅ (self only)
-Delete Self	      ❌	            ❌	                  ❌	               ❌
+Manage Workspaces	✅	            ✅ (own)	         ❌	               ❌
+Manage Companies	✅	            ✅ (in workspace)	 ✅ (own)	         ❌
+Manage Users	    ✅	            ✅ (in workspace)	 ✅ (in company)  	✅ (self only)
+Delete Self	      ❌	            ❌	               ❌	               ❌
 Delete Same Level	✅	            ❌	                  ❌	               ❌
 
 ### Key Design Decisions:
@@ -107,7 +107,8 @@ users (
     last_login_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP -- soft delete
+    deleted_at TIMESTAMP -- soft delete,
+    deleted BOOLEAN DEFAULT false
 );
 
 -- User invitations
