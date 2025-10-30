@@ -3,25 +3,23 @@ package handlers
 
 import (
 	"database/sql"
-	"net/http"
-
 	"main-server/config"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 type HomeHandler struct {
-	config *config.Config
 	db     *sql.DB
+	config *config.Config
 }
 
-func NewHomeHandler(config *config.Config, db *sql.DB) *HomeHandler {
+func NewHomeHandler(db *sql.DB, config *config.Config) *HomeHandler {
 	return &HomeHandler{
-		config: config,
 		db:     db,
+		config: config,
 	}
 }
-
 func (h *HomeHandler) Home(c echo.Context) error {
 	// Log audit event for page access
 	// h.services.AuditService.LogEvent("page_access", "user123", "/", "home_page_view")
@@ -43,12 +41,10 @@ func (h *HomeHandler) Home(c echo.Context) error {
 }
 
 func (h *HomeHandler) Health(c echo.Context) error {
-	// Test database connection
 	if err := h.db.Ping(); err != nil {
 		return c.JSON(http.StatusServiceUnavailable, map[string]interface{}{
 			"status": "unhealthy",
 			"error":  "database connection failed",
-			// "timestamp": h.TimeService.Now().Unix(),
 		})
 	}
 
@@ -56,6 +52,5 @@ func (h *HomeHandler) Health(c echo.Context) error {
 		"status":      "healthy",
 		"environment": h.config.Environment,
 		"version":     h.config.Version,
-		// "timestamp":   h.services.TimeService.Now().Unix(),
 	})
 }

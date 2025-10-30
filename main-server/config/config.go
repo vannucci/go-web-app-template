@@ -1,63 +1,71 @@
 package config
 
 import (
+	"log"
 	"os"
-	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	DatabaseURL string
 	Port        string
-	SessionKey  string
-
-	// AWS
-	AWSRegion          string
-	AWSAccessKeyID     string
-	AWSSecretAccessKey string
-	S3Bucket           string
-
-	// External API
-	ExternalAPIURL string
-	ExternalAPIKey string
-
-	// App settings
 	Environment string
-	LogLevel    string
 	Version     string
+	SessionKey  string
+	Debug       bool
+	LogLevel    string
+	Database    *DatabaseConfig
+	BaseURL     string
+	UploadDir   string
 }
 
-func Load() *Config {
-	return &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://localhost/adtech_dev"),
-		Port:        getEnv("PORT", "8080"),
-		SessionKey:  getEnv("SESSION_KEY", "default-dev-key-change-in-production"),
+type DatabaseConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+	SSLMode  string
+}
 
-		AWSRegion:          getEnv("AWS_REGION", "us-east-1"),
-		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
-		AWSSecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
-		S3Bucket:           getEnv("S3_BUCKET", "adtech-audiences"),
-
-		ExternalAPIURL: getEnv("EXTERNAL_API_URL", ""),
-		ExternalAPIKey: getEnv("EXTERNAL_API_KEY", ""),
-
-		Environment: getEnv("ENVIRONMENT", "development"),
-		LogLevel:    getEnv("LOG_LEVEL", "info"),
-		Version:     getEnv("VERSION", "1.0.0"),
+func Load() (*Config, error) {
+	env := os.Getenv("GO_ENV")
+	if env == "" {
+		env = "development"
 	}
+
+	// Load .env file
+	if err := godotenv.Load(".env." + env); err != nil {
+		log.Println("No .env file found, using defaults")
+	}
+
+	dbConfig := &DatabaseConfig{
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnv("DB_PORT", "5432"),
+		User:     getEnv("DB_USER", "appuser"),
+		Password: getEnv("DB_PASSWORD", "apppassword"),
+		Name:     getEnv("DB_NAME", "appdb"),
+		SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+	}
+
+	debug := getEnv("DEBUG", "true") == "true"
+
+	return &Config{
+		Port:        getEnv("PORT", "8080"),
+		Environment: getEnv("ENVIRONMENT", env),
+		Version:     getEnv("VERSION", "1.0.0"),
+		SessionKey:  getEnv("SESSION_KEY", "default-dev-key"),
+		Debug:       debug,
+		LogLevel:    getEnv("LOG_LEVEL", "debug"),
+		Database:    dbConfig,
+		BaseURL:     getEnv("BASE_URL", "http://localhost:8080"),
+		UploadDir:   getEnv("UPLOAD_DIR", "./uploads"),
+	}, nil
 }
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
-	}
-	return defaultValue
-}
-
-func getEnvInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intVal, err := strconv.Atoi(value); err == nil {
-			return intVal
-		}
 	}
 	return defaultValue
 }

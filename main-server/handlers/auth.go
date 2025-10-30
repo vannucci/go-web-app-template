@@ -1,23 +1,25 @@
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 
+	"main-server/config"
 	"main-server/services"
 )
 
 type AuthHandler struct {
-	authService *services.AuthService
-	userService *services.UserService
+	db     *sql.DB
+	config *config.Config
 }
 
-func NewAuthHandler(authService *services.AuthService, userService *services.UserService) *AuthHandler {
+func NewAuthHandler(db *sql.DB, config *config.Config) *AuthHandler {
 	return &AuthHandler{
-		authService: authService,
-		userService: userService,
+		db:     db,
+		config: config,
 	}
 }
 
@@ -109,26 +111,11 @@ func (h *AuthHandler) getCurrentUser(c echo.Context) *services.User {
 	}
 }
 
-// UPDATE existing Logout method - change the redirect
 func (h *AuthHandler) Logout(c echo.Context) error {
-	// Get ID token for Cognito logout
-	sess, err := session.Get("session", c)
-	if err != nil {
-		return err
-	}
-
-	idToken, _ := sess.Values["id_token"].(string)
-
-	// Clear local session (add this helper)
+	// Clear local session
 	h.clearUserSession(c)
 
-	// Redirect to Cognito logout if we have an ID token
-	if idToken != "" {
-		logoutURL := h.authService.GetLogoutURL("http://localhost:8080/")
-		return c.Redirect(http.StatusFound, logoutURL)
-	}
-
-	// Otherwise redirect to splash page (CHANGED from /auth/login)
+	// Redirect to home page
 	return c.Redirect(http.StatusFound, "/")
 }
 
@@ -152,4 +139,43 @@ func (h *AuthHandler) Dashboard(c echo.Context) error {
 	}
 
 	return c.Render(http.StatusOK, "dashboard.html", data)
+}
+
+func (h *AuthHandler) ShowLogin(c echo.Context) error {
+	return c.Render(http.StatusOK, "login.html", map[string]interface{}{
+		"Title": "Login",
+	})
+}
+
+func (h *AuthHandler) Login(c echo.Context) error {
+	email := c.FormValue("email")
+	password := c.FormValue("password")
+
+	// Simple hardcoded check for now
+	if email == "admin@example.com" && password == "password123" {
+		user := &services.User{
+			ID:    "1",
+			Email: email,
+			Name:  "Admin User",
+		}
+
+		h.saveUserSession(c, user)
+		return c.Redirect(http.StatusFound, "/app/dashboard")
+	}
+
+	return c.Render(http.StatusOK, "login.html", map[string]interface{}{
+		"Title": "Login",
+		"Error": "Invalid credentials",
+	})
+}
+
+func (h *AuthHandler) ShowRegister(c echo.Context) error {
+	return c.Render(http.StatusOK, "register.html", map[string]interface{}{
+		"Title": "Register",
+	})
+}
+
+func (h *AuthHandler) Register(c echo.Context) error {
+	// For now, just redirect to login
+	return c.Redirect(http.StatusFound, "/auth/login")
 }
